@@ -142,7 +142,7 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
 import WebGLTileLayer from 'ol/layer/WebGLTile';
-import OSM from 'ol/source/OSM';
+import XYZ from 'ol/source/XYZ';
 import GeoTIFF from 'ol/source/GeoTIFF';
 import { getRegions, downloadTiles, listTaskFiles } from '../api/gridtile';
 
@@ -213,7 +213,10 @@ onMounted(async () => {
     target: previewMapTarget.value,
     layers: [
       new TileLayer({
-        source: new OSM()
+        source: new XYZ({
+          url: 'https://{a-c}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+          crossOrigin: 'anonymous'
+        })
       })
     ],
     view: new View({
@@ -387,19 +390,26 @@ const loadGeoTiff = async (url) => {
 <style scoped>
 .tile-downloader-page {
   width: 100%;
+  height: 100%;
+  min-height: 0;
   display: flex;
   gap: 16px;
   align-items: stretch;
+  overflow: hidden;
 }
 
 .left-panel {
   flex: 0 0 520px;
   max-width: 520px;
+  height: 100%;
+  min-height: 0;
 }
 
 .right-panel {
   flex: 1;
   min-width: 520px;
+  height: 100%;
+  min-height: 0;
 }
 
 .tile-downloader {
@@ -412,6 +422,9 @@ const loadGeoTiff = async (url) => {
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   color: #e0e0e0;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: auto;
 }
 
 h2 {
@@ -590,7 +603,7 @@ button:disabled {
 
 .preview-map {
   flex: 1;
-  min-height: 620px;
+  min-height: 0;
   border-radius: 12px;
   overflow: hidden;
 }

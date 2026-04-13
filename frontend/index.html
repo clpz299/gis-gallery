@@ -1,9 +1,251 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GIS Gallery</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --spot-1-size: clamp(1200px, 72vw, 3600px) clamp(600px, 44vh, 2000px);
+        --spot-2-size: clamp(800px, 48vw, 2600px) clamp(480px, 34vh, 1600px);
+        --vignette-size: clamp(900px, 60vw, 3400px) clamp(540px, 45vh, 1900px);
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        overflow: hidden;
+      }
+
+      body {
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+          sans-serif;
+        background: radial-gradient(
+            var(--spot-1-size) at 50% 0%,
+            rgba(59, 130, 246, 0.18),
+            transparent 55%
+          ),
+          radial-gradient(var(--spot-2-size) at 70% 20%, rgba(99, 102, 241, 0.18), transparent 55%),
+          linear-gradient(180deg, #050a18 0%, #070b14 45%, #050815 100%);
+        color: #e5e7eb;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+          repeating-linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.045) 0,
+            rgba(255, 255, 255, 0.045) 1px,
+            transparent 1px,
+            transparent 120px
+          ),
+          repeating-linear-gradient(
+            0deg,
+            rgba(255, 255, 255, 0.035) 0,
+            rgba(255, 255, 255, 0.035) 1px,
+            transparent 1px,
+            transparent 120px
+          );
+        opacity: 0.22;
+        mix-blend-mode: overlay;
+        z-index: -1;
+      }
+
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          var(--vignette-size) at 50% 40%,
+          transparent 40%,
+          rgba(0, 0, 0, 0.55) 100%
+        );
+        z-index: -1;
+      }
+
+      #app {
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .app-header {
+        flex-shrink: 0;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        height: 64px;
+        padding: 0 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(3, 10, 26, 0.55);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        box-sizing: border-box;
+      }
+
+      .header-brand h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: 0.6px;
+        line-height: 1;
+        background: linear-gradient(90deg, #8b5cf6 0%, #60a5fa 55%, #34d399 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        white-space: nowrap;
+      }
+
+      .app-nav {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        justify-content: center;
+      }
+
+      .app-nav button {
+        appearance: none;
+        border: 1px solid transparent;
+        background: transparent;
+        color: rgba(226, 232, 240, 0.72);
+        font-size: 14px;
+        padding: 9px 14px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+      }
+
+      .app-nav button:hover:not(.active) {
+        color: rgba(255, 255, 255, 0.92);
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.10);
+        transform: translateY(-1px);
+      }
+
+      .app-nav button.active {
+        color: #ffffff;
+        background: rgba(99, 102, 241, 0.32);
+        border-color: rgba(99, 102, 241, 0.55);
+        box-shadow: 0 10px 18px rgba(0, 0, 0, 0.28), 0 0 0 3px rgba(99, 102, 241, 0.14);
+      }
+
+      .header-search {
+        display: flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 6px 10px;
+        width: 220px;
+        transition: all 0.2s ease;
+      }
+
+      .header-search:focus-within {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(99, 102, 241, 0.5);
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        width: 260px;
+      }
+
+      .search-input {
+        background: transparent;
+        border: none;
+        color: #e5e7eb;
+        font-size: 14px;
+        padding: 0 8px;
+        width: 100%;
+        outline: none;
+      }
+
+      .search-input::placeholder {
+        color: rgba(255, 255, 255, 0.3);
+      }
+
+      .search-btn {
+        background: transparent;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s ease;
+      }
+
+      .search-btn:hover {
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .app-container {
+        flex: 1;
+        display: flex;
+        width: 100%;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .app-main {
+        flex: 1;
+        background: transparent;
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+
+      .app-footer {
+        flex-shrink: 0;
+        height: 48px;
+        background: rgba(3, 10, 26, 0.8);
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 28px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(10px);
+        z-index: 10;
+      }
+
+      .footer-content {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .footer-links {
+        display: flex;
+        gap: 20px;
+      }
+
+      .footer-links a {
+        color: rgba(255, 255, 255, 0.4);
+        text-decoration: none;
+        transition: color 0.2s ease;
+      }
+
+      .footer-links a:hover {
+        color: rgba(255, 255, 255, 0.8);
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>

@@ -4,7 +4,7 @@ import 'ol/ol.css';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
-import OSM from 'ol/source/OSM';
+import XYZ from 'ol/source/XYZ';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import Feature from 'ol/Feature';
@@ -80,7 +80,10 @@ onMounted(() => {
     target: mapContainer.value,
     layers: [
       new TileLayer({
-        source: new OSM()
+        source: new XYZ({
+          url: 'https://{a-c}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+          crossOrigin: 'anonymous'
+        })
       }),
       vectorLayer
     ],
@@ -134,8 +137,8 @@ onMounted(() => {
 .map-wrapper {
   position: relative;
   width: 100%;
-  height: 600px; /* Adjust height as needed */
-  border: 1px solid #ccc;
+  height: 100%;
+  min-height: 0;
 }
 .map {
   width: 100%;
