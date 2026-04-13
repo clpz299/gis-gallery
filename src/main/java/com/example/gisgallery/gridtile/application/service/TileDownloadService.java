@@ -22,6 +22,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -240,5 +242,44 @@ public class TileDownloadService {
         
         // 默认 Web Mercator (最常见)
         return TileUtils.TileMatrixSet.WEB_MERCATOR;
+    }
+
+    public List<String> listTaskOutputFiles(String taskId) throws IOException {
+        Path dir = taskOutputDir(taskId);
+        if (!Files.exists(dir) || !Files.isDirectory(dir)) {
+            return List.of();
+        }
+        
+        // 递归查找目录下的所有普通文件，并将路径转为相对路径返回
+        try (Stream<Path> stream = Files.walk(dir)) {
+            return stream
+                    .filter(Files::isRegularFile)
+                    .map(p -> dir.relativize(p).toString().replace("\\", "/"))
+                    .sorted()
+                    .collect(Collectors.toList());
+        }
+    }
+
+    public Path resolveTaskOutputFile(String taskId, String fileName) throws IOException {
+        if (taskId == null || taskId.isBlank()) {
+            throw new IOException("taskId 不能为空");
+        }
+        if (fileName == null || fileName.isBlank()) {
+            throw new IOException("fileName 不能为空");
+        }
+        fileName = fileName.replace("\\", "/");
+        if (fileName.contains("..") || fileName.startsWith("/") || fileName.startsWith("\\") || fileName.contains(":")) {
+            throw new IOException("非法文件名");
+        }
+        Path dir = taskOutputDir(taskId);
+        Path file = dir.resolve(fileName).normalize();
+        if (!file.startsWith(dir.normalize())) {
+            throw new IOException("非法路径");
+        }
+        return file;
+    }
+
+    private Path taskOutputDir(String taskId) {
+        return Paths.get(DOWNLOAD_ROOT, taskId);
     }
 }

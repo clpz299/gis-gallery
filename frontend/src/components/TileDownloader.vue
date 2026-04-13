@@ -1,109 +1,150 @@
 <template>
-  <div class="tile-downloader">
-    <h2>瓦片下载器</h2>
-    
-    <div class="form-group">
-      <label>选择区域：</label>
-      <div class="region-selects">
-        <select v-model="selectedProvince" @change="onProvinceChange">
-          <option value="">请选择省份</option>
-          <option v-for="p in provinces" :key="p.adcode" :value="p">{{ p.name }}</option>
-        </select>
+  <div class="tile-downloader-page">
+    <div class="left-panel">
+      <div class="tile-downloader">
+        <h2>瓦片下载器</h2>
         
-        <select v-model="selectedCity" @change="onCityChange" :disabled="!selectedProvince">
-          <option value="">请选择城市</option>
-          <option v-for="c in cities" :key="c.adcode" :value="c">{{ c.name }}</option>
-        </select>
-        
-        <select v-model="selectedDistrict" :disabled="!selectedCity">
-          <option value="">请选择区县</option>
-          <option v-for="d in districts" :key="d.adcode" :value="d">{{ d.name }}</option>
-        </select>
+        <div class="form-group">
+          <label>选择区域：</label>
+          <div class="region-selects">
+            <select v-model="selectedProvince" @change="onProvinceChange">
+              <option value="">请选择省份</option>
+              <option v-for="p in provinces" :key="p.adcode" :value="p">{{ p.name }}</option>
+            </select>
+            
+            <select v-model="selectedCity" @change="onCityChange" :disabled="!selectedProvince">
+              <option value="">请选择城市</option>
+              <option v-for="c in cities" :key="c.adcode" :value="c">{{ c.name }}</option>
+            </select>
+            
+            <select v-model="selectedDistrict" :disabled="!selectedCity">
+              <option value="">请选择区县</option>
+              <option v-for="d in districts" :key="d.adcode" :value="d">{{ d.name }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>缩放级别 (Zoom)：</label>
+          <input type="text" v-model="zoomLevelsInput" placeholder="例如: 10,11 (逗号分隔)" />
+        </div>
+
+        <div class="form-group">
+          <label>瓦片服务：</label>
+          <select v-model="selectedServiceUrl">
+            <optgroup label="EPSG:3857 (Web Mercator)">
+              <option value="https://tile.openstreetmap.org/{z}/{x}/{y}.png">OpenStreetMap (XYZ)</option>
+              <option value="https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}">ArcGIS World Imagery - 影像 (XYZ)</option>
+              <option value="https://tile.opentopomap.org/{z}/{x}/{y}.png">OpenTopoMap (XYZ)</option>
+              <option value="https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png">CARTO Light (XYZ)</option>
+            </optgroup>
+            <optgroup label="EPSG:4326 (WGS84)">
+              <option value="http://t0.tianditu.gov.cn/img_c/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=c&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=">天地图影像 (经纬度投影)</option>
+            </optgroup>
+            <optgroup label="其他">
+              <option value="http://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=">天地图影像 (Web Mercator)</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>源坐标系：</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" v-model="sourceEpsg" value="EPSG:3857" /> EPSG:3857 (Web Mercator)
+            </label>
+            <label class="radio-label">
+              <input type="radio" v-model="sourceEpsg" value="EPSG:4326" /> EPSG:4326 (WGS84)
+            </label>
+          </div>
+          <small class="tip">通常 OSM/Google/ArcGIS 等互联网地图为 3857，天地图(经纬度)为 4326</small>
+        </div>
+
+        <div class="form-group" v-if="needsKey">
+          <label>API Key:</label>
+          <input type="text" v-model="apiKey" placeholder="输入您的 API Key" />
+        </div>
+
+        <div class="form-group">
+          <label>输出格式：</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" v-model="outputFormat" value="png" /> PNG (图片)
+            </label>
+            <label class="radio-label">
+              <input type="radio" v-model="outputFormat" value="tif" /> GeoTIFF (带地理坐标)
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>选项：</label>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="mergeTiles" /> 合并为单张大图
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" v-model="reprojectTo4490" /> 转换为 CGCS2000 (EPSG:4490)
+            </label>
+          </div>
+        </div>
+
+        <button @click="startDownload" :disabled="!canDownload">开始下载</button>
+
+        <div v-if="result" class="result-box">
+          <h3>下载任务已提交</h3>
+          <p>任务ID: {{ result.taskId }}</p>
+          <p>输出路径: {{ result.outputPath }}</p>
+          <p>状态: {{ result.status }}</p>
+
+          <div class="form-group result-actions">
+            <button class="secondary" @click="refreshTaskFiles">刷新输出文件</button>
+          </div>
+
+          <div v-if="taskFiles.length > 0" class="form-group">
+            <label>输出文件：</label>
+            <select v-model="selectedTaskFile">
+              <option value="">请选择文件</option>
+              <option v-for="f in taskFiles" :key="f.name" :value="f">{{ f.name }}</option>
+            </select>
+            <small class="tip">选择 .tif 文件可在右侧预览</small>
+          </div>
+
+          <div v-if="selectedTaskFile && selectedTaskFile.type === 'tif'" class="form-group">
+            <button class="secondary" @click="previewSelectedTif">在右侧预览该 TIF</button>
+          </div>
+        </div>
+
+        <div v-if="error" class="error-box">
+          {{ error }}
+        </div>
       </div>
     </div>
 
-    <div class="form-group">
-      <label>缩放级别 (Zoom)：</label>
-      <input type="text" v-model="zoomLevelsInput" placeholder="例如: 10,11 (逗号分隔)" />
-    </div>
-
-    <div class="form-group">
-      <label>瓦片服务：</label>
-      <select v-model="selectedServiceUrl">
-        <optgroup label="EPSG:3857 (Web Mercator)">
-          <option value="https://tile.openstreetmap.org/{z}/{x}/{y}.png">OpenStreetMap (XYZ)</option>
-          <option value="https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}">ArcGIS World Imagery - 影像 (XYZ)</option>
-          <option value="https://tile.opentopomap.org/{z}/{x}/{y}.png">OpenTopoMap (XYZ)</option>
-          <option value="https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png">CARTO Light (XYZ)</option>
-        </optgroup>
-        <optgroup label="EPSG:4326 (WGS84)">
-          <option value="http://t0.tianditu.gov.cn/img_c/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=c&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=">天地图影像 (经纬度投影)</option>
-        </optgroup>
-        <optgroup label="其他">
-          <option value="http://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&tk=">天地图影像 (Web Mercator)</option>
-        </optgroup>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>源坐标系：</label>
-      <div class="radio-group">
-        <label class="radio-label">
-          <input type="radio" v-model="sourceEpsg" value="EPSG:3857" /> EPSG:3857 (Web Mercator)
-        </label>
-        <label class="radio-label">
-          <input type="radio" v-model="sourceEpsg" value="EPSG:4326" /> EPSG:4326 (WGS84)
-        </label>
+    <div class="right-panel">
+      <div class="tif-preview">
+        <div class="preview-header">
+          <h2>TIF 预览</h2>
+          <div class="preview-meta" v-if="previewFileName">
+            {{ previewFileName }}
+          </div>
+        </div>
+        <div ref="previewMapTarget" class="preview-map"></div>
       </div>
-      <small class="tip">通常 OSM/Google/ArcGIS 等互联网地图为 3857，天地图(经纬度)为 4326</small>
-    </div>
-
-    <div class="form-group" v-if="needsKey">
-      <label>API Key:</label>
-      <input type="text" v-model="apiKey" placeholder="输入您的 API Key" />
-    </div>
-
-    <div class="form-group">
-      <label>输出格式：</label>
-      <div class="radio-group">
-        <label class="radio-label">
-          <input type="radio" v-model="outputFormat" value="png" /> PNG (图片)
-        </label>
-        <label class="radio-label">
-          <input type="radio" v-model="outputFormat" value="tif" /> GeoTIFF (带地理坐标)
-        </label>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>选项：</label>
-      <div class="checkbox-group">
-        <label class="checkbox-label">
-          <input type="checkbox" v-model="mergeTiles" /> 合并为单张大图
-        </label>
-        <label class="checkbox-label">
-          <input type="checkbox" v-model="reprojectTo4490" /> 转换为 CGCS2000 (EPSG:4490)
-        </label>
-      </div>
-    </div>
-
-    <button @click="startDownload" :disabled="!canDownload">开始下载</button>
-
-    <div v-if="result" class="result-box">
-      <h3>下载任务已提交</h3>
-      <p>任务ID: {{ result.taskId }}</p>
-      <p>输出路径: {{ result.outputPath }}</p>
-      <p>状态: {{ result.status }}</p>
-    </div>
-    <div v-if="error" class="error-box">
-      {{ error }}
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { getRegions, downloadTiles } from '../api/gridtile';
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
+import 'ol/ol.css';
+import Map from 'ol/Map';
+import View from 'ol/View';
+import TileLayer from 'ol/layer/Tile';
+import WebGLTileLayer from 'ol/layer/WebGLTile';
+import OSM from 'ol/source/OSM';
+import GeoTIFF from 'ol/source/GeoTIFF';
+import { getRegions, downloadTiles, listTaskFiles } from '../api/gridtile';
 
 const allRegions = ref([]);
 const provinces = ref([]);
@@ -124,6 +165,13 @@ const outputFormat = ref('png');
 
 const result = ref(null);
 const error = ref(null);
+const taskFiles = ref([]);
+const selectedTaskFile = ref('');
+const previewMapTarget = ref(null);
+const previewFileName = ref('');
+
+let mapInstance = null;
+let geotiffLayer = null;
 
 // Watch service URL change to auto-detect EPSG
 watch(selectedServiceUrl, (newVal) => {
@@ -159,6 +207,29 @@ onMounted(async () => {
     }
   } catch (e) {
     console.error('Failed to load regions', e);
+  }
+
+  mapInstance = new Map({
+    target: previewMapTarget.value,
+    layers: [
+      new TileLayer({
+        source: new OSM()
+      })
+    ],
+    view: new View({
+      center: [0, 0],
+      zoom: 2
+    })
+  });
+
+  await nextTick();
+  mapInstance.updateSize();
+});
+
+onBeforeUnmount(() => {
+  if (mapInstance) {
+    mapInstance.setTarget(undefined);
+    mapInstance = null;
   }
 });
 
@@ -206,6 +277,9 @@ const onCityChange = () => {
 const startDownload = async () => {
   result.value = null;
   error.value = null;
+  taskFiles.value = [];
+  selectedTaskFile.value = '';
+  previewFileName.value = '';
 
   try {
     // 处理 zoom levels
@@ -251,6 +325,7 @@ const startDownload = async () => {
     const data = await downloadTiles(payload);
     if (data) {
       result.value = data;
+      await refreshTaskFiles();
     } else {
       error.value = "下载请求失败";
     }
@@ -258,17 +333,82 @@ const startDownload = async () => {
     error.value = "请求异常: " + e.message;
   }
 };
+
+const refreshTaskFiles = async () => {
+  if (!result.value || !result.value.taskId) return;
+  try {
+    const files = await listTaskFiles(result.value.taskId);
+    taskFiles.value = Array.isArray(files) ? files : [];
+    if (!selectedTaskFile.value) {
+      const firstTif = taskFiles.value.find(f => f.type === 'tif');
+      if (firstTif) {
+        selectedTaskFile.value = firstTif;
+      }
+    }
+  } catch (e) {
+    error.value = "读取输出文件失败: " + e.message;
+  }
+};
+
+const previewSelectedTif = async () => {
+  if (!selectedTaskFile.value || selectedTaskFile.value.type !== 'tif') return;
+  const url = selectedTaskFile.value.url;
+  previewFileName.value = selectedTaskFile.value.name;
+  await loadGeoTiff(url);
+};
+
+const loadGeoTiff = async (url) => {
+  if (!mapInstance) return;
+
+  if (geotiffLayer) {
+    mapInstance.removeLayer(geotiffLayer);
+    geotiffLayer = null;
+  }
+
+  const source = new GeoTIFF({
+    sources: [{ url }]
+  });
+
+  geotiffLayer = new WebGLTileLayer({ source });
+  mapInstance.addLayer(geotiffLayer);
+
+  try {
+    const viewOptions = await source.getView();
+    mapInstance.setView(new View(viewOptions));
+  } catch (e) {
+    error.value = "TIF 预览失败: " + e.message;
+  }
+
+  await nextTick();
+  mapInstance.updateSize();
+};
 </script>
 
 <style scoped>
+.tile-downloader-page {
+  width: 100%;
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.left-panel {
+  flex: 0 0 520px;
+  max-width: 520px;
+}
+
+.right-panel {
+  flex: 1;
+  min-width: 520px;
+}
+
 .tile-downloader {
   padding: 30px;
   background: rgba(25, 27, 48, 0.7); /* Deep blue/black transparent */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 16px;
-  margin: 20px auto;
-  max-width: 800px;
+  margin: 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   color: #e0e0e0;
@@ -377,6 +517,11 @@ button {
   margin-top: 10px;
 }
 
+button.secondary {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
 button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(100, 108, 255, 0.4);
@@ -407,6 +552,47 @@ button:disabled {
   border: 1px solid rgba(231, 76, 60, 0.3);
   border-radius: 8px;
   color: #e74c3c;
+}
+
+.tif-preview {
+  padding: 20px;
+  background: rgba(25, 27, 48, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.preview-header h2 {
+  margin: 0;
+  text-align: left;
+}
+
+.preview-meta {
+  color: #a0a0b0;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-map {
+  flex: 1;
+  min-height: 620px;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 /* Scrollbar for selects */

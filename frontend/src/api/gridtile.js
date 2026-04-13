@@ -14,3 +14,10 @@ export function downloadTiles(data) {
     data,
   });
 }
+
+export function listTaskFiles(taskId) {
+  return request({
+    url: `/gridtile/tasks/${encodeURIComponent(taskId)}/files`,
+    method: 'get',
+  });
+}
