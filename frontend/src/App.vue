@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import MapComponent from './components/MapComponent.vue'
+import WeatherMap from './components/WeatherMap.vue'
 import TileDownloader from './components/TileDownloader.vue'
 
 const currentTab = ref('map')
@@ -28,7 +28,7 @@ const currentTab = ref('map')
   <div class="app-container">
     <main class="app-main">
       <div v-if="currentTab === 'map'" class="tab-content">
-        <MapComponent />
+        <WeatherMap />
       </div>
       <div v-if="currentTab === 'download'" class="tab-content">
         <TileDownloader />

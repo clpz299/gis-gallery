@@ -13,16 +13,22 @@ import Point from 'ol/geom/Point';
 import { fromLonLat } from 'ol/proj';
 import { Style, Circle, Fill, Stroke, Text } from 'ol/style';
 import Overlay from 'ol/Overlay';
-import { getWeatherHeatmap } from '../api/weather';
+import { getWeatherHeatmap, listWeatherForecastTimes, listWeatherRuns } from '../api/weather';
 
 const mapContainer = ref(null);
 const popupContainer = ref(null);
 const popupContent = ref(null);
 const popupCloser = ref(null);
-const selectedElement = ref('tmp_2m');
+const model = ref('gfs_0p25');
+const selectedElement = ref('temp');
+const selectedLevel = ref('surface');
 const heatmapRadius = ref(18);
 const heatmapBlur = ref(26);
 const controlsOpen = ref(true);
+const runs = ref([]);
+const forecastTimes = ref([]);
+const selectedRunTimeUtc = ref('');
+const selectedLeadHours = ref(null);
 
 let map = null;
 let heatmapSource = null;
@@ -144,20 +150,67 @@ onMounted(() => {
   };
 
   refreshHeatmap();
+
+  loadRuns();
 });
 
-watch([selectedElement, heatmapRadius, heatmapBlur], () => {
+watch([selectedElement, selectedLevel, selectedRunTimeUtc, selectedLeadHours, heatmapRadius, heatmapBlur], () => {
   if (!map || !heatmapLayer) return;
   heatmapLayer.setRadius(heatmapRadius.value);
   heatmapLayer.setBlur(heatmapBlur.value);
   refreshHeatmap();
 });
 
+watch(selectedRunTimeUtc, () => {
+  loadForecastTimes();
+});
+
+const loadRuns = async () => {
+  try {
+    const data = await listWeatherRuns({ model: model.value, limit: 24 });
+    runs.value = Array.isArray(data) ? data : [];
+    if (!selectedRunTimeUtc.value && runs.value.length > 0) {
+      selectedRunTimeUtc.value = runs.value[0].runTimeUtc;
+    }
+  } catch (e) {
+    runs.value = [];
+  } finally {
+    loadForecastTimes();
+  }
+};
+
+const loadForecastTimes = async () => {
+  if (!selectedRunTimeUtc.value) {
+    forecastTimes.value = [];
+    selectedLeadHours.value = null;
+    return;
+  }
+  try {
+    const data = await listWeatherForecastTimes({ model: model.value, runTimeUtc: selectedRunTimeUtc.value });
+    forecastTimes.value = Array.isArray(data) ? data : [];
+    if (forecastTimes.value.length > 0) {
+      const first = forecastTimes.value[0];
+      if (selectedLeadHours.value == null) {
+        selectedLeadHours.value = first.leadHours;
+      }
+    } else {
+      selectedLeadHours.value = null;
+    }
+  } catch (e) {
+    forecastTimes.value = [];
+    selectedLeadHours.value = null;
+  }
+};
+
 const refreshHeatmap = async () => {
   if (!heatmapSource) return;
   try {
     const data = await getWeatherHeatmap({
+      model: model.value,
       element: selectedElement.value,
+      level: selectedLevel.value,
+      runTimeUtc: selectedRunTimeUtc.value || undefined,
+      leadHours: selectedLeadHours.value == null ? undefined : selectedLeadHours.value,
       minLon: 70,
       minLat: 15,
       maxLon: 140,
@@ -202,14 +255,14 @@ const refreshHeatmap = async () => {
         <span class="toggle-title">气象要素</span>
         <span class="toggle-value">
           {{
-            selectedElement === 'tmp_2m'
-              ? '2米气温'
-              : selectedElement === 'rh_2m'
-                ? '2米相对湿度'
-                : selectedElement === 'prate'
-                  ? '降水率'
-                  : selectedElement === 'wind_10m'
-                    ? '10米风速'
+            selectedElement === 'temp'
+              ? '温度'
+              : selectedElement === 'wind_u'
+                ? 'U风分量'
+                : selectedElement === 'wind_v'
+                  ? 'V风分量'
+                  : selectedElement === 'pressure'
+                    ? '海平面气压'
                     : selectedElement
           }}
         </span>
@@ -217,12 +270,28 @@ const refreshHeatmap = async () => {
       </button>
       <div class="controls-body" v-show="controlsOpen">
         <div class="control-item">
+          <span class="label">起报</span>
+          <select v-model="selectedRunTimeUtc" :disabled="runs.length === 0">
+            <option v-for="r in runs" :key="r.runTimeUtc" :value="r.runTimeUtc">
+              {{ r.runTimeUtc }}
+            </option>
+          </select>
+        </div>
+        <div class="control-item">
+          <span class="label">时效</span>
+          <select v-model.number="selectedLeadHours" :disabled="forecastTimes.length === 0">
+            <option v-for="t in forecastTimes" :key="t.leadHours" :value="t.leadHours">
+              +{{ t.leadHours }}h
+            </option>
+          </select>
+        </div>
+        <div class="control-item">
           <span class="label">要素</span>
           <select v-model="selectedElement">
-            <option value="tmp_2m">2米气温</option>
-            <option value="rh_2m">2米相对湿度</option>
-            <option value="prate">降水率</option>
-            <option value="wind_10m">10米风速</option>
+            <option value="temp">温度</option>
+            <option value="wind_u">U风分量</option>
+            <option value="wind_v">V风分量</option>
+            <option value="pressure">海平面气压</option>
           </select>
         </div>
         <div class="control-item">

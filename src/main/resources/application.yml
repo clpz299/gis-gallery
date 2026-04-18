@@ -12,3 +12,51 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/schema.sql
+
+weather:
+  gfs:
+    enabled: true
+    cron: "0 */1 * * * *"
+    publish-lag-minutes: 120
+    model: gfs_0p25
+    run-hours-utc: [0, 6, 12, 18]
+    lead:
+      start: 0
+      end: 48
+      step: 3
+    bbox:
+      min-lon: 70
+      min-lat: 15
+      max-lon: 140
+      max-lat: 55
+    stride: 6
+    level: surface
+    elements:
+      - code: temp
+        variable: TMP
+        gfs-var: TMP
+        nc-var: t2m
+        lev-param: lev_2_m_above_ground
+        url-template: "https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.t{runHour}z.pgrb2.0p25.f{leadHours}&dir=/gfs.{runDate}/{runHour}/atmos&var_{gfsVar}=on&{levParam}=on&subregion=&leftlon={minLon}&rightlon={maxLon}&toplat={maxLat}&bottomlat={minLat}"
+      - code: wind_u
+        variable: UGRD
+        gfs-var: UGRD
+        nc-var: u10
+        lev-param: lev_10_m_above_ground
+        url-template: "https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.t{runHour}z.pgrb2.0p25.f{leadHours}&dir=/gfs.{runDate}/{runHour}/atmos&var_{gfsVar}=on&{levParam}=on&subregion=&leftlon={minLon}&rightlon={maxLon}&toplat={maxLat}&bottomlat={minLat}"
+      - code: wind_v
+        variable: VGRD
+        gfs-var: VGRD
+        nc-var: v10
+        lev-param: lev_10_m_above_ground
+        url-template: "https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.t{runHour}z.pgrb2.0p25.f{leadHours}&dir=/gfs.{runDate}/{runHour}/atmos&var_{gfsVar}=on&{levParam}=on&subregion=&leftlon={minLon}&rightlon={maxLon}&toplat={maxLat}&bottomlat={minLat}"
+      - code: pressure
+        variable: PRMSL
+        gfs-var: PRMSL
+        nc-var: prmsl
+        lev-param: lev_mean_sea_level
+        url-template: "https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.t{runHour}z.pgrb2.0p25.f{leadHours}&dir=/gfs.{runDate}/{runHour}/atmos&var_{gfsVar}=on&{levParam}=on&subregion=&leftlon={minLon}&rightlon={maxLon}&toplat={maxLat}&bottomlat={minLat}"
