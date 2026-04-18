@@ -403,6 +403,10 @@ const loadGeoTiff = async (url) => {
   max-width: 520px;
   height: 100%;
   min-height: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  box-sizing: border-box;
 }
 
 .right-panel {
@@ -410,6 +414,10 @@ const loadGeoTiff = async (url) => {
   min-width: 520px;
   height: 100%;
   min-height: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  box-sizing: border-box;
 }
 
 .tile-downloader {
@@ -578,6 +586,8 @@ button:disabled {
   height: 100%;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .preview-header {
