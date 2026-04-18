@@ -2,6 +2,7 @@ package com.example.gisgallery.weather.application.service;
 
 import com.example.gisgallery.weather.api.dto.WeatherHeatmapPointDto;
 import com.example.gisgallery.weather.api.dto.WeatherHeatmapResponseDto;
+import com.example.gisgallery.weather.infrastructure.repository.WeatherQueryRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;

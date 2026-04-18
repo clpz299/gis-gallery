@@ -1,4 +1,4 @@
-package com.example.gisgallery.weather.application.service;
+package com.example.gisgallery.weather.infrastructure.repository;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;

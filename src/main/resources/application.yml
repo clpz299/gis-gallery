@@ -20,7 +20,7 @@ spring:
 weather:
   gfs:
     enabled: true
-    cron: "0 */1 * * * *"
+    cron: "0 */60 * * * *"
     publish-lag-minutes: 120
     model: gfs_0p25
     run-hours-utc: [0, 6, 12, 18]
@@ -60,3 +60,20 @@ weather:
         nc-var: prmsl
         lev-param: lev_mean_sea_level
         url-template: "https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.t{runHour}z.pgrb2.0p25.f{leadHours}&dir=/gfs.{runDate}/{runHour}/atmos&var_{gfsVar}=on&{levParam}=on&subregion=&leftlon={minLon}&rightlon={maxLon}&toplat={maxLat}&bottomlat={minLat}"
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+  group-configs:
+    - group: default
+      paths-to-match: /api/**
+      packages-to-scan: com.example.gisgallery
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn

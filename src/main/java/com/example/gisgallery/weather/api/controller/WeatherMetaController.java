@@ -3,7 +3,7 @@ package com.example.gisgallery.weather.api.controller;
 import com.example.gisgallery.common.response.RestResult;
 import com.example.gisgallery.weather.api.dto.WeatherForecastTimeDto;
 import com.example.gisgallery.weather.api.dto.WeatherRunDto;
-import com.example.gisgallery.weather.application.service.WeatherQueryRepository;
+import com.example.gisgallery.weather.infrastructure.repository.WeatherQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;

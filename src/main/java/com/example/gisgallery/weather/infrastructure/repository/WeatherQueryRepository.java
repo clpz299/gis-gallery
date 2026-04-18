@@ -1,4 +1,4 @@
-package com.example.gisgallery.weather.application.service;
+package com.example.gisgallery.weather.infrastructure.repository;
 
 import com.example.gisgallery.weather.api.dto.WeatherForecastTimeDto;
 import com.example.gisgallery.weather.api.dto.WeatherHeatmapPointDto;

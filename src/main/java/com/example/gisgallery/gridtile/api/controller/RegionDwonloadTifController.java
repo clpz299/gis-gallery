@@ -7,6 +7,13 @@ import com.example.gisgallery.gridtile.application.service.TileDownloadService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
@@ -38,11 +45,17 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/gridtile")
+@Tag(name = "GridTile", description = "行政区瓦片下载与 TIF 预览接口")
 public class RegionDwonloadTifController {
 
     @Autowired
     TileDownloadService tileDownloadService;
 
+    @Operation(summary = "读取行政区数据", description = "读取内置 all_region.json，返回省市区层级行政区数据")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "读取成功"),
+            @ApiResponse(responseCode = "500", description = "读取失败", content = @Content(schema = @Schema()))
+    })
     @GetMapping("/regions")
     public RestResult<JsonNode> getRegions() throws IOException {
         ClassPathResource resource = new ClassPathResource("static/basic-data/all_region.json");
@@ -51,6 +64,11 @@ public class RegionDwonloadTifController {
         return RestResult.success(jsonNode);
     }
 
+    @Operation(summary = "提交瓦片下载任务", description = "按行政区、缩放级别和瓦片服务参数提交下载任务")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "任务提交成功"),
+            @ApiResponse(responseCode = "500", description = "任务提交失败", content = @Content(schema = @Schema()))
+    })
     @PostMapping("/download")
     public RestResult<RegionDownloadResult> downloadTiles(@RequestBody RegionDownloadRequest request) {
         if (request.getAdcode() == null) {
@@ -67,8 +85,13 @@ public class RegionDwonloadTifController {
         return RestResult.success(result);
     }
 
+    @Operation(summary = "查询任务输出文件列表", description = "根据任务 ID 获取输出文件列表及预览下载 URL")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "查询成功"),
+            @ApiResponse(responseCode = "500", description = "查询失败", content = @Content(schema = @Schema()))
+    })
     @GetMapping("/tasks/{taskId}/files")
-    public RestResult<List<Map<String, Object>>> listTaskFiles(@PathVariable("taskId") String taskId) throws IOException {
+    public RestResult<List<Map<String, Object>>> listTaskFiles(@Parameter(description = "任务 ID", required = true) @PathVariable("taskId") String taskId) throws IOException {
         List<String> names = tileDownloadService.listTaskOutputFiles(taskId);
         List<Map<String, Object>> files = new ArrayList<>();
         for (String name : names) {
@@ -89,8 +112,15 @@ public class RegionDwonloadTifController {
         return RestResult.success(files);
     }
 
+    @Operation(summary = "读取任务输出文件", description = "支持普通下载与 Range 分段读取（用于大文件预览）")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "读取成功"),
+            @ApiResponse(responseCode = "206", description = "分段读取成功"),
+            @ApiResponse(responseCode = "404", description = "文件不存在"),
+            @ApiResponse(responseCode = "500", description = "读取失败", content = @Content(schema = @Schema()))
+    })
     @GetMapping("/tasks/{taskId}/files/**")
-    public ResponseEntity<?> readTaskFile(@PathVariable("taskId") String taskId,
+    public ResponseEntity<?> readTaskFile(@Parameter(description = "任务 ID", required = true) @PathVariable("taskId") String taskId,
                                           jakarta.servlet.http.HttpServletRequest request,
                                           @RequestHeader HttpHeaders headers) throws IOException {
         String prefix = "/api/gridtile/tasks/" + taskId + "/files/";

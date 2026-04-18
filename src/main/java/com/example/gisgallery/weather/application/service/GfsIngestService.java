@@ -3,6 +3,7 @@ package com.example.gisgallery.weather.application.service;
 import com.example.gisgallery.weather.api.dto.GfsIngestRequestDto;
 import com.example.gisgallery.weather.api.dto.GfsIngestResponseDto;
 import com.example.gisgallery.weather.api.dto.WeatherHeatmapPointDto;
+import com.example.gisgallery.weather.infrastructure.repository.WeatherIngestRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
