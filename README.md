@@ -81,6 +81,7 @@
 
 - **天气地图 (Weather Map)**：基于 OpenLayers 的气象要素渲染示例，支持起报时间/预报时效切换、热力图与栅格瓦片两种渲染模式、分层设色与图例展示，并通过服务端栅格瓦片查询与插值提升缩放/拖拽时的可视化一致性。详见 [气象栅格瓦片渲染与插值设计](doc/column/气象栅格瓦片渲染与插值设计.md)。
 - **瓦片下载与区域管理 (Tile Download & Region)**：支持按行政区（省/市/区）选择范围，选择 XYZ/WMTS 瓦片源与缩放级别（最多两级），输出 PNG 或 GeoTIFF，并可选择合并输出或保留 z/x/y 瓦片目录结构。详见 [区域瓦片下载.md](doc/gridtile/区域瓦片下载.md)。
+- **DEM 数字高程模型可视化 (DEM Terrain Visualization)**：支持在 Leaflet 中进行矩形/圆形/自由形状选区，调用 OpenTopography 下载 GeoTIFF，并在 Three.js 中进行地形网格拉升、专题渲染（高程/坡度/坡向/TWI）与交互式图例联动展示。详见 [DEM 数字高程模型可视化](doc/column/DEM%20数字高程模型可视化.md)。
 
 ***
 

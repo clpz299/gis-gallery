@@ -812,7 +812,17 @@ const backStep = () => {
     nextTick(() => map && map.invalidateSize())
     return
   }
-  resetAndGoHome()
+  if (selected.value.bbox || selectedLayer || (drawItems && drawItems.getLayers().length > 0)) {
+    selected.value = { kind: null, bbox: null, areaKm2: 0, center: null, coordsText: '--' }
+    drawItems?.clearLayers()
+    geoJsonLayer?.clearLayers()
+    legend.value = { min: null, max: null, visible: false }
+    legendHoverText.value = ''
+    demCache = null
+    showError('已回退到当前页面初始状态')
+    return
+  }
+  showError('已在当前页面起始步骤')
 }
 
 const resetAndGoHome = () => {
