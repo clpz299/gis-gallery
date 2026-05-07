@@ -13,10 +13,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html,
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  height: 100%;
 }
 
 #app {
@@ -26,4 +28,7 @@ body {
   margin: 0;
   padding: 0;
   text-align: initial;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }

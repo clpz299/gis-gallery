@@ -2,8 +2,12 @@
 import { ref } from 'vue'
 import WeatherMap from './components/WeatherMap.vue'
 import TileDownloader from './components/TileDownloader.vue'
+import DemTopography from './components/DemTopography.vue'
 
-const currentTab = ref('map')
+const currentTab = ref('dem')
+const handleGoHome = () => {
+  currentTab.value = 'map'
+}
 </script>
 
 <template>
@@ -15,6 +19,7 @@ const currentTab = ref('map')
     <nav class="app-nav">
       <button :class="{ active: currentTab === 'map' }" @click="currentTab = 'map'">Weather Map</button>
       <button :class="{ active: currentTab === 'download' }" @click="currentTab = 'download'">Tile Downloader</button>
+      <button :class="{ active: currentTab === 'dem' }" @click="currentTab = 'dem'">3D Terrain Demo</button>
     </nav>
 
     <div class="header-search">
@@ -33,12 +38,15 @@ const currentTab = ref('map')
       <div v-if="currentTab === 'download'" class="tab-content">
         <TileDownloader />
       </div>
+      <div v-if="currentTab === 'dem'" class="tab-content">
+        <DemTopography @go-home="handleGoHome" />
+      </div>
     </main>
   </div>
 
   <footer class="app-footer">
     <div class="footer-content">
-      <span>&copy; 2024 GIS Gallery. All rights reserved.</span>
+      <span>&copy; 2025 GIS Gallery. All rights reserved.</span>
       <div class="footer-links">
         <a href="#">关于</a>
         <a href="#">隐私政策</a>
@@ -49,9 +57,24 @@ const currentTab = ref('map')
 </template>
 
 <style scoped>
+.app-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.app-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
 .tab-content {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  display: flex;
 }
 </style>

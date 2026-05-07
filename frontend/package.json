@@ -9,8 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@turf/turf": "^7.3.5",
     "axios": "^1.13.6",
+    "cesium": "^1.140.0",
+    "geotiff": "^3.0.5",
+    "leaflet": "^1.9.4",
+    "leaflet-draw": "^1.0.4",
     "ol": "^9.0.0",
+    "three": "^0.184.0",
+    "vite-plugin-cesium": "^1.2.23",
     "vue": "^3.4.19"
   },
   "devDependencies": {
